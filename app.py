@@ -11,14 +11,28 @@ from config import Config
 
 app = Flask(__name__)
 app.config.from_object(Config)
-CORS(app)
 
+# ===============================
+# CORS CONFIGURATION (ALLOW ALL)
+# ===============================
+CORS(
+    app,
+    resources={r"/*": {"origins": "*"}},
+    supports_credentials=True,
+    allow_headers=["Content-Type", "Authorization"],
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+)
+
+# ===============================
 # MongoDB connection
+# ===============================
 client = MongoClient(app.config["MONGO_URI"])
 db = client.aws_backend
 users = db.users
 
+# ===============================
 # JWT setup
+# ===============================
 jwt = JWTManager(app)
 
 
@@ -35,7 +49,8 @@ def home():
 # ===============================
 @app.route("/register", methods=["POST"])
 def register():
-    data = request.json
+    data = request.get_json()
+
     username = data.get("username")
     email = data.get("email")
     password = data.get("password")
@@ -60,7 +75,8 @@ def register():
 # ===============================
 @app.route("/login", methods=["POST"])
 def login():
-    data = request.json
+    data = request.get_json()
+
     email = data.get("email")
     password = data.get("password")
 
@@ -97,8 +113,8 @@ def profile():
     return jsonify({
         "msg": "Profile fetched successfully",
         "user": {
-            "username": user["username"],
-            "email": user["email"]
+            "username": user.get("username", "Not Set"),
+            "email": user.get("email", "")
         }
     }), 200
 
